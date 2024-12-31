@@ -9,7 +9,7 @@ public class EasyIK : Component, Component.ExecuteInEditor
     private Vector3 startPosition { get; set; }
 	[Property] private Vector3[] jointPositions { get; set; }
     private float[] boneLength { get; set; }
-    private float jointChainLength { get; set; }
+    public float jointChainLength { get; set; }
     private float distanceToTarget { get; set; }
     private Rotation[] startRotation { get; set; }
     private Vector3[] jointStartDirection { get; set; }
