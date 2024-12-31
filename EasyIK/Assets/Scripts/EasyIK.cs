@@ -1,7 +1,7 @@
 ﻿
 public class EasyIK : Component, Component.ExecuteInEditor
 {
-	[Property] public int numberOfJoints { get; set; } = 2;
+	[Property] public int numberOfPoints { get; set; } = 3;
 	[Property] public GameObject ikTarget { get; set; }
 	[Property] public int iterations { get; set; } = 10;
 	[Property] public float tolerance { get; set; } = 0.05f;
@@ -40,11 +40,11 @@ public class EasyIK : Component, Component.ExecuteInEditor
     {
         // Let's set some properties
         jointChainLength = 0;
-        jointTransforms = new GameObject[numberOfJoints];
-        jointPositions = new Vector3[numberOfJoints];
-        boneLength = new float[numberOfJoints];
-        jointStartDirection = new Vector3[numberOfJoints];
-        startRotation = new Rotation[numberOfJoints];
+        jointTransforms = new GameObject[numberOfPoints];
+        jointPositions = new Vector3[numberOfPoints];
+        boneLength = new float[numberOfPoints];
+        jointStartDirection = new Vector3[numberOfPoints];
+        startRotation = new Rotation[numberOfPoints];
         ikTargetStartRot = ikTarget.WorldRotation;
 
         var current = GameObject;
@@ -75,7 +75,7 @@ public class EasyIK : Component, Component.ExecuteInEditor
 
     void PoleConstraint()
     {
-        if (poleTarget != null && numberOfJoints < 4)
+        if (poleTarget != null && numberOfPoints < 4)
         {
             // Get the limb axis direction
             var limbAxis = (jointPositions[2] - jointPositions[0]).Normal;
@@ -152,13 +152,12 @@ public class EasyIK : Component, Component.ExecuteInEditor
         // IF THE TARGET IS NOT REACHABLE
         if (distanceToTarget > jointChainLength)
         {
-            // Direction from root to ikTarget
             var direction = ikTarget.WorldPosition - jointPositions[0];
 
             // Get the jointPositions
-            for (int i = 1; i < jointPositions.Length; i += 1)
+            for (int i = 1; i < jointPositions.Length; i++)
             {
-                jointPositions[i] = jointPositions[i - 1] + direction.Normal * boneLength[i - 1];
+                jointPositions[i] = jointPositions[i - 1] + direction.Normal * boneLength[i - 1] - 0.1f;
             }
         }
         // IF THE TARGET IS REACHABLE
@@ -209,9 +208,9 @@ public class EasyIK : Component, Component.ExecuteInEditor
             var current = GameObject;
             var child = GameObject.Children[0];
 			Gizmo.Draw.Color = Color.Cyan;
-            for (int i = 0; i < numberOfJoints; i += 1)
+            for (int i = 0; i < numberOfPoints; i += 1)
             {
-                if (i == numberOfJoints - 1)
+                if (i >= numberOfPoints - 2)
                 {
 					Gizmo.Draw.LineCapsule( new Capsule( WorldTransform.PointToLocal(current.WorldPosition), WorldTransform.PointToLocal( child.WorldPosition ), gizmoSize) );
 			break;
@@ -228,9 +227,9 @@ public class EasyIK : Component, Component.ExecuteInEditor
         if (localRotationAxis == true)
         {    
             var current = GameObject;
-            for (int i = 0; i < numberOfJoints; i += 1)
+            for (int i = 0; i < numberOfPoints; i += 1)
             {
-                if (i == numberOfJoints - 1)
+                if (i == numberOfPoints - 2)
                 {
                     drawHandle(current);
                 }
@@ -246,13 +245,13 @@ public class EasyIK : Component, Component.ExecuteInEditor
 		var mid = start.Children[0];
         var end = mid.Children[0];
 
-		if (poleRotationAxis == true && poleTarget != null && numberOfJoints < 4)
+		if (poleRotationAxis == true && poleTarget != null && numberOfPoints < 4)
         {    
             Gizmo.Draw.Color = Color.White;
             Gizmo.Draw.Line(start.WorldPosition, end.WorldPosition);
         }
 
-        if (poleDirection == true && poleTarget != null && numberOfJoints < 4)
+        if (poleDirection == true && poleTarget != null && numberOfPoints < 4)
         {
 			Gizmo.Draw.Color = Color.Gray;
 			Gizmo.Draw.Line( start.WorldPosition, poleTarget.WorldPosition);
