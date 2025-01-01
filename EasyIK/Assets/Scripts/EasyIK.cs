@@ -15,7 +15,6 @@ public class EasyIK : Component, Component.ExecuteInEditor
     private Vector3[] jointStartDirection { get; set; }
     private Rotation ikTargetStartRot { get; set; }
     private Rotation lastJointStartRot { get; set; }
-    [Property] public Angles lookOffset { get; set; } = new Angles(1,1,1);
 
 	[Property] public GameObject poleTarget;
 
@@ -188,11 +187,9 @@ public class EasyIK : Component, Component.ExecuteInEditor
         for (int i = 0; i < jointPositions.Length - 1; i += 1)
         {
             jointTransforms[i].WorldPosition = jointPositions[i];
-			//var targetRotation = Rotation.FromToRotation(jointStartDirection[i], jointPositions[i + 1] - jointPositions[i]);
-			//jointTransforms[i].WorldRotation = targetRotation * startRotation[i];
-
-			jointTransforms[i].WorldRotation = Rotation.LookAt( jointPositions[i + 1] - jointPositions[i], Vector3.Up ) * lookOffset;
-		}
+            var targetRotation = Rotation.FromToRotation(jointStartDirection[i], jointPositions[i + 1] - jointPositions[i]);
+            jointTransforms[i].WorldRotation = targetRotation * startRotation[i];
+        }
         // Let's constrain the rotation of the last joint to the IK target and maintain the offset.
         Rotation offset = lastJointStartRot * ikTargetStartRot.Inverse;
         jointTransforms.Last().WorldRotation = ikTarget.WorldRotation * offset;
