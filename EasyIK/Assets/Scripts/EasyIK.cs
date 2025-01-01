@@ -12,9 +12,11 @@ public class EasyIK : Component, Component.ExecuteInEditor
     public float jointChainLength { get; set; }
     private float distanceToTarget { get; set; }
     private Rotation[] startRotation { get; set; }
-    private Vector3[] jointStartDirection { get; set; }
+    private Rotation[] startLocalRotation { get; set; }
+	private Vector3[] jointStartDirection { get; set; }
     private Rotation ikTargetStartRot { get; set; }
     private Rotation lastJointStartRot { get; set; }
+	[Property] public Angles UnLockedRotAxis { get; set; } = new Angles( 1, 1, 0 );
 
 	[Property] public GameObject poleTarget;
 
@@ -45,7 +47,8 @@ public class EasyIK : Component, Component.ExecuteInEditor
         boneLength = new float[numberOfPoints];
         jointStartDirection = new Vector3[numberOfPoints];
         startRotation = new Rotation[numberOfPoints];
-        ikTargetStartRot = ikTarget.WorldRotation;
+        startLocalRotation = new Rotation[numberOfPoints];
+		ikTargetStartRot = ikTarget.WorldRotation;
 
         var current = GameObject;
 
@@ -67,7 +70,8 @@ public class EasyIK : Component, Component.ExecuteInEditor
 
                 jointStartDirection[i] = current.Children[0].WorldPosition - current.WorldPosition;
                 startRotation[i] = current.WorldRotation;
-            }
+                startLocalRotation[i] = current.LocalRotation;
+			}
             // Move the iteration to next joint in the chain
             current = current.Children[0];
         }
@@ -183,16 +187,25 @@ public class EasyIK : Component, Component.ExecuteInEditor
         // Apply the pole constraint
         PoleConstraint();
 
-        // Apply the jointPositions and rotations to the joints
-        for (int i = 0; i < jointPositions.Length - 1; i += 1)
+		Rotation offset = lastJointStartRot * ikTargetStartRot.Inverse;
+		jointTransforms.Last().WorldRotation = ikTarget.WorldRotation * offset;
+		// Apply the jointPositions and rotations to the joints
+		for (int i = 0; i < jointPositions.Length - 1; i += 1)
         {
             jointTransforms[i].WorldPosition = jointPositions[i];
             var targetRotation = Rotation.FromToRotation(jointStartDirection[i], jointPositions[i + 1] - jointPositions[i]);
-            jointTransforms[i].WorldRotation = targetRotation * startRotation[i];
-        }
+
+			var newRot = jointTransforms[i].Parent.WorldTransform.RotationToLocal( targetRotation * startRotation[i] );
+			jointTransforms[i].LocalRotation = new Angles
+			(
+				UnLockedRotAxis.pitch > 0 ? newRot.Pitch() : startLocalRotation[i].Pitch(),
+				UnLockedRotAxis.yaw > 0 ? newRot.Yaw() : startLocalRotation[i].Yaw(),
+				UnLockedRotAxis.roll > 0 ? newRot.Roll() : startLocalRotation[i].Roll()
+			);
+
+
+		}
         // Let's constrain the rotation of the last joint to the IK target and maintain the offset.
-        Rotation offset = lastJointStartRot * ikTargetStartRot.Inverse;
-        jointTransforms.Last().WorldRotation = ikTarget.WorldRotation * offset;
     }
 
     protected override void OnUpdate()
