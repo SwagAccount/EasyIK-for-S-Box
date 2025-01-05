@@ -5,7 +5,7 @@ public class EasyIK : Component, Component.ExecuteInEditor
 	[Property] public GameObject ikTarget { get; set; }
 	[Property] public int iterations { get; set; } = 10;
 	[Property] public float tolerance { get; set; } = 0.05f;
-	private GameObject[] jointTransforms { get; set; }
+	public GameObject[] jointTransforms { get; set; }
     private Vector3 startPosition { get; set; }
 	[Property] private Vector3[] jointPositions { get; set; }
     private float[] boneLength { get; set; }
@@ -21,10 +21,15 @@ public class EasyIK : Component, Component.ExecuteInEditor
 	[Property] public GameObject poleTarget;
 
 	[Property] public bool debugJoints = true;
+
 	[Property] public bool localRotationAxis = false;
 
-    // Remove this if you need bigger gizmos:
-    [Property, Range(0.0f, 40f)]
+	[Property] public bool SelfUpdate = true;
+
+
+
+	// Remove this if you need bigger gizmos:
+	[Property, Range(0.0f, 40f)]
     public float gizmoSize = 2f;
 
     public bool poleDirection = false;
@@ -34,11 +39,11 @@ public class EasyIK : Component, Component.ExecuteInEditor
 	{
 		Awake();
 	}
-	protected override async void OnEnabled()
+	protected override void OnEnabled()
 	{
 		Awake();
 	}
-	void Awake()
+	public void Awake()
     {
         // Let's set some properties
         jointChainLength = 0;
@@ -143,7 +148,7 @@ public class EasyIK : Component, Component.ExecuteInEditor
         }
     }
 
-    private void SolveIK()
+    public void SolveIK()
     {
         // Get the jointPositions from the joints
         for (int i = 0; i < jointTransforms.Length; i += 1)
@@ -210,6 +215,9 @@ public class EasyIK : Component, Component.ExecuteInEditor
 
     protected override void OnUpdate()
     {
+		if ( !SelfUpdate )
+			return;
+
         SolveIK();
     }
 
